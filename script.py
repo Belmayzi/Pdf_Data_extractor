@@ -1,5 +1,4 @@
 from operator import index
-from numpy.lib.function_base import angle
 from pdf2image import convert_from_path
 from pytesseract import image_to_string
 from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
