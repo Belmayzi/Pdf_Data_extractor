@@ -39,28 +39,10 @@ os.chdir('C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/Original_docs')
 original_docs = os.listdir()
 
 
-def separate_docs():
-    global number_of_pages_pdf
-    for doc in original_docs:
-        inputpdf = PdfFileReader(open(doc, "rb"))
-        number_of_pages_pdf = inputpdf.numPages
-        for i in range(inputpdf.numPages):
-            output = PdfFileWriter()
-            output.addPage(inputpdf.getPage(i))
-
-            os.chdir(
-                'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs')
-            with open("doc%s.pdf" % i, "wb") as outputStream:
-                output.write(outputStream)
-
-
-separate_docs()
-
-
-def find_annex_page():
+def find_first_page(Current_document):
     os.chdir(
-        'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs')
-    global index_of_first_page, found, separated_docs
+        'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/%s' % Current_document)
+    global index_of_first_page, separated_docs
 
     separated_docs = natsorted(os.listdir())
 
@@ -74,12 +56,9 @@ def find_annex_page():
             break
 
 
-find_annex_page()
-
-
-def find_number_of_pages():
+def find_number_of_pages(current_document):
     os.chdir(
-        'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs')
+        'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/%s' % current_document)
 
     global number_of_pages, number_of_pages_index
     pdftotxt = get_text_from_any_pdf(separated_docs[index_of_first_page])
@@ -90,14 +69,13 @@ def find_number_of_pages():
     number_of_pages = int(pdftotxt[x+len(find)] + pdftotxt[x+len(find)+1])
     if index_of_first_page != 0:
         number_of_pages_index = index_of_first_page+number_of_pages
+    else:
+        number_of_pages_index = number_of_pages
 
 
-find_number_of_pages()
-
-
-def get_annexes():
+def get_annexes(current_document):
     os.chdir(
-        'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs')
+        'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/%s' % current_document)
     annexes_list = separated_docs[index_of_first_page+number_of_pages:]
     i = 0
     filtred_annexes = []
@@ -139,7 +117,7 @@ def get_annexes():
             actual_number_last_page_annexe = int(
                 last_page_of_annexe[y+len(find2)] + last_page_of_annexe[y+len(find2)+1])
 
-            if actual_number_last_page_annexe != number_of_pages_annexe and skip == False:
+            if actual_number_last_page_annexe != number_of_pages_annexe:
                 check = index_of_last_page
                 while True:
                     check = check-actual_number_last_page_annexe
@@ -159,18 +137,58 @@ def get_annexes():
         else:
             filtred_annexes.append(annexes_list[i])
             i += 1
+    os.chdir(
+        'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/Filtred_docs')
+    file_name = "{}" .format(current_document)
+    os.mkdir(current_document)
 
-    for i in filtred_annexes:
-        if isinstance(i, list):
+    i = 0
+    while i < len(filtred_annexes):
+        count = i+1
+        annexe_name = "Annexe {} {}.pdf" .format(count, current_document)
+
+        if isinstance(filtred_annexes[i], list):
+            os.chdir(
+                'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/{}'.format(current_document))
             merger = PdfFileMerger()
-            for pdf in i:
+            for pdf in filtred_annexes[i]:
                 merger.append(pdf)
-            merger.write("result%s.pdf" % i)
-            shutil.move("C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/result%s.pdf" % i,
-                        "C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/Filtred_docs/result%s.pdf" % i)
+            with open("%s" % annexe_name, "wb") as outputStream:
+                merger.write(outputStream)
+
+            shutil.move("C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/{}/{}" .format(current_document, annexe_name),
+                        "C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/Filtred_docs/{}/{}" .format(current_document, annexe_name))
         else:
-            shutil.move("C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/%s" %
-                        i, "C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/Filtred_docs/%s" % i)
+            shutil.move("C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/{}/{}" .format(current_document,
+                        filtred_annexes[i]), "C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/Filtred_docs/{}/{}" .format(current_document, annexe_name))
+        i += 1
 
 
-get_annexes()
+def separate_docs():
+    global number_of_pages_pdf, document_name
+    for doc in original_docs:
+        inputpdf = PdfFileReader(open(doc, "rb"))
+        os.chdir(
+            'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs')
+
+        document_name = '%s' % doc
+        document_name = document_name.replace(".pdf", '')
+        os.mkdir(document_name)
+
+        number_of_pages_pdf = inputpdf.numPages
+        for i in range(inputpdf.numPages):
+            output = PdfFileWriter()
+            output.addPage(inputpdf.getPage(i))
+
+            os.chdir(
+                'C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/temporary_separated_docs/%s' % document_name)
+            with open("doc%s.pdf" % i, "wb") as outputStream:
+                output.write(outputStream)
+
+        find_first_page(document_name)
+        find_number_of_pages(document_name)
+        get_annexes(document_name)
+        os.chdir('C:/Users/Yasser/Desktop/coding/python/GET_ANNEXES/Original_docs')
+
+
+separate_docs()
